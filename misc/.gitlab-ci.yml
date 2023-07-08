@@ -1,0 +1,34 @@
+stages:
+  - install
+  - test
+  - build
+  - deploy
+
+cache:
+  - key: $CI_COMMIT_BRANCH
+  - paths:
+    - node_modules
+
+install_job:
+  stage: install
+  image: node:18
+  script: npm install
+
+test_job:
+  stage: test
+  image: node:18
+  script: npm run lint
+
+build_job:
+  stage: build
+  image: node:18
+  script: npm run build
+  artifacts:
+    paths:
+      - dist/
+  
+deploy_job:
+  stage: deploy
+  script: echo 'hello deploy'
+
+# 使用gitlab-ci构建前端项目的简单配置，不包括部署阶段
