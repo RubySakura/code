@@ -154,6 +154,117 @@ function resolvePromise(promise2, x, resolve, reject) {
     resolve(x);
   }
 }
+Promise.prototype.catch = function (onRejected) {
+  return this.then(null, onRejected);
+};
+
+Promise.prototype.finally = function (onFinally) {
+  return this.then(
+    (value) => {
+      return Promise.resolve(onFinally()).then(() => value);
+    },
+    (reason) => {
+      return Promise.resolve(onFinally()).then(() => {
+        throw reason;
+      });
+    }
+  );
+};
+
+Promise.resolve = function (value) {
+  return new Promise((resolve, reject) => {
+    resolve(value);
+  });
+};
+
+Promise.reject = function (reason) {
+  return new Promise((resolve, reject) => {
+    reject(reason);
+  });
+};
+
+Promise.all = function (promiseArray) {
+  if (!Array.isArray(promiseArray)) {
+    throw new TypeError("The arguments should be an array");
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      const resultArray = [];
+      let count = 0;
+      const length = promiseArray.length;
+
+      for (let i = 0; i < length; i++) {
+        promiseArray[i].then((data) => {
+          resultArray[i] = data;
+          count++;
+
+          if (count >= length) {
+            resolve(resultArray);
+          }
+        }, reject);
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+Promise.race = function (promiseArray) {
+  if (!Array.isArray(promiseArray)) {
+    throw new TypeError("The arguments should be an array");
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      const length = promiseArray.length;
+
+      for (let i = 0; i < length; i++) {
+        promiseArray[i].then(resolve, reject);
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+Promise.allSettled = function (promiseArray) {
+  if (!Array.isArray(promiseArray)) {
+    throw new TypeError("The arguments should be an array");
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      const resultArray = [];
+      let count = 0;
+      const length = promiseArray.length;
+
+      for (let i = 0; i < length; i++) {
+        promiseArray[i].then(
+          (value) => {
+            resultArray[i] = { status: "fulfilled", value };
+            count++;
+
+            if (count >= length) {
+              resolve(resultArray);
+            }
+          },
+          (reason) => {
+            resultArray[i] = { status: "rejected", reason };
+            count++;
+
+            if (count >= length) {
+              resolve(resultArray);
+            }
+          }
+        );
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
 Promise.defer = Promise.deferred = function () {
   let dfd = {};
   dfd.promise = new Promise((resolve, reject) => {
